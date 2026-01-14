@@ -1,6 +1,6 @@
 "use client";
 
-import { ArrowRight, ShieldAlert, Zap, Loader2, Twitter, Skull, BarChart3, Globe, Lock, Download, User as UserIcon, LogOut, FileText } from "lucide-react";
+import { Skull, ArrowRight, Loader2, Twitter, BarChart3, Globe, Download, LogOut, FileText } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { SlayerLogo } from "@/components/SlayerLogo";
@@ -215,7 +215,7 @@ export default function Home() {
               <div className="space-y-2">
                 <h4 className="font-black uppercase tracking-widest text-red-500 italic">Sarah // The Liquidator</h4>
                 <p className="text-[10px] text-zinc-500 uppercase tracking-widest leading-loose">
-                  GP at a SOTA fund. Her job is to filter noise. She looks for "The Big Lie" and execution gaps. If she doesn't believe you, no one will.
+                  GP at a SOTA fund. Her job is to filter noise. She looks for &ldquo;The Big Lie&rdquo; and execution gaps. If she doesn&apos;t believe you, no one will.
                 </p>
               </div>
             </div>
@@ -233,7 +233,7 @@ export default function Home() {
               <div className="space-y-2">
                 <h4 className="font-black uppercase tracking-widest text-red-500 italic">Leo // The Visionary</h4>
                 <p className="text-[10px] text-zinc-500 uppercase tracking-widest leading-loose">
-                  Looking for the next moonshot. He cares about "Why Now" and "Product Obsession." He is your best hope, but he's easily bored.
+                  Looking for the next moonshot. He cares about &ldquo;Why Now&rdquo; and &ldquo;Product Obsession.&rdquo; He is your best hope, but he&apos;s easily bored.
                 </p>
               </div>
             </div>

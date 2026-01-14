@@ -5,14 +5,12 @@ import { createClient } from "@/lib/supabase";
 import { SlayerLogo } from "@/components/SlayerLogo";
 import { ArrowRight, Loader2, Mail } from "lucide-react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 
 export default function AuthPage() {
     const [email, setEmail] = useState("");
     const [loading, setLoading] = useState(false);
     const [message, setMessage] = useState<string | null>(null);
     const supabase = createClient();
-    const router = useRouter();
 
     const handleEmailLogin = async (e: React.FormEvent) => {
         e.preventDefault();

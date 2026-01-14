@@ -1,5 +1,7 @@
-import { useEffect, useState } from "react";
-import { ArrowLeft, Loader2, Upload, Skull, Download, Zap, ShieldCheck, Twitter, CreditCard, CheckCircle2, FileText, Lock } from "lucide-react";
+"use client";
+
+import { Suspense, useEffect, useState } from "react";
+import { ArrowLeft, Loader2, Upload, Skull, Download, Zap, ShieldCheck, Twitter, FileText, Lock, CheckCircle2 } from "lucide-react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import html2canvas from "html2canvas";
@@ -26,7 +28,7 @@ interface RoastData {
   pdf_unlocked?: boolean;
 }
 
-export default function RoastPage() {
+function RoastPageContent() {
   const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
   const [data, setData] = useState<RoastData | null>(null);
@@ -36,10 +38,8 @@ export default function RoastPage() {
   const [exporting, setExporting] = useState(false);
   const [user, setUser] = useState<User | null>(null);
   const [credits, setCredits] = useState<number>(0);
-  const [initializing, setInitializing] = useState(true);
   const [roastId, setRoastId] = useState<string | null>(null);
   const [pdfUnlocked, setPdfUnlocked] = useState(false);
-  const [checkingPayment, setCheckingPayment] = useState(false);
 
   const supabase = createClient();
   const router = useRouter();
@@ -66,7 +66,6 @@ export default function RoastPage() {
 
       const queryRoastId = searchParams.get("roast_id");
       if (queryRoastId) {
-        setInitializing(true);
         const { data: roast } = await supabase
           .from('roasts')
           .select('pdf_unlocked, result_json')
@@ -78,14 +77,11 @@ export default function RoastPage() {
           setPdfUnlocked(roast.pdf_unlocked);
           setRoastId(queryRoastId);
         }
-        setInitializing(false);
-      } else {
-        setInitializing(false);
       }
     };
 
     init();
-  }, [supabase, router]);
+  }, [supabase, router, searchParams]);
 
   const exportPDF = async () => {
     const reportElement = document.getElementById("diagnostic-report");
@@ -136,25 +132,60 @@ export default function RoastPage() {
         return;
       }
 
-      const result = await res.json();
-      if (result.error) throw new Error(result.error);
+      if (res.status === 429) {
+        alert("Rate limit exceeded. Please wait a moment before trying again.");
+        return;
+      }
 
-      setData(result);
-      setRoastId(result.roast_id);
-      setPdfUnlocked(result.pdf_unlocked);
-      posthog.capture('audit_completed', {
-        score: result.fundability_score,
-        roast_id: result.roast_id
-      });
+      if (!res.ok) {
+        const errorData = await res.json();
+        throw new Error(errorData.error || "Roast failed");
+      }
+
+      // Handle streaming response
+      const reader = res.body?.getReader();
+      const decoder = new TextDecoder();
+      let accumulatedText = "";
+
+      if (reader) {
+        while (true) {
+          const { done, value } = await reader.read();
+          if (done) break;
+          accumulatedText += decoder.decode(value, { stream: true });
+
+          // Try to parse the accumulated JSON (it might be partial)
+          try {
+            const partialData = JSON.parse(accumulatedText);
+            setData(partialData);
+          } catch {
+            // JSON not complete yet, continue accumulating
+          }
+        }
+
+        // Final parse
+        try {
+          const finalData = JSON.parse(accumulatedText);
+          setData(finalData);
+          posthog.capture('audit_completed', {
+            score: finalData.fundability_score,
+          });
+        } catch {
+          // If streaming didn't produce valid JSON, try to extract it
+          console.error("Failed to parse final streamed data");
+        }
+      }
+
       // Optimistically decrement credit
       setCredits(prev => prev - 1);
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error(error);
-      alert(error.message || "The diagnostic was interrupted. Please try again.");
+      const errorMessage = error instanceof Error ? error.message : "The diagnostic was interrupted. Please try again.";
+      alert(errorMessage);
     } finally {
       setLoading(false);
     }
   };
+
 
   const handleInterrogation = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -523,5 +554,17 @@ export default function RoastPage() {
         </div>
       </footer>
     </div>
+  );
+}
+
+export default function RoastPage() {
+  return (
+    <Suspense fallback={
+      <div className="min-h-screen bg-black text-white font-mono flex items-center justify-center">
+        <Loader2 className="animate-spin text-red-500" size={48} />
+      </div>
+    }>
+      <RoastPageContent />
+    </Suspense>
   );
 }

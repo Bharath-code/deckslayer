@@ -2,16 +2,21 @@
 
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase";
-import { User } from "@supabase/supabase-js";
-import { ArrowLeft, FileText, Loader2, Lock, Unlock, Zap } from "lucide-react";
+import { ArrowLeft, FileText, Loader2, Lock, Unlock } from "lucide-react";
 import Link from "next/link";
-import { motion } from "framer-motion";
 import { SlayerLogo } from "@/components/SlayerLogo";
 import { useRouter } from "next/navigation";
 
+interface RoastRecord {
+    id: string;
+    deck_name: string;
+    created_at: string;
+    pdf_unlocked: boolean;
+    result_json: { fundability_score: number };
+}
+
 export default function HistoryPage() {
-    const [user, setUser] = useState<User | null>(null);
-    const [roasts, setRoasts] = useState<any[]>([]);
+    const [roasts, setRoasts] = useState<RoastRecord[]>([]);
     const [loading, setLoading] = useState(true);
     const supabase = createClient();
     const router = useRouter();
@@ -23,7 +28,6 @@ export default function HistoryPage() {
                 router.push("/auth");
                 return;
             }
-            setUser(user);
 
             const { data: roastData } = await supabase
                 .from('roasts')
@@ -81,7 +85,7 @@ export default function HistoryPage() {
                                     <div>
                                         <h3 className="text-xl font-black uppercase tracking-tight group-hover:text-red-500 transition-colors">{roast.deck_name}</h3>
                                         <p className="text-[9px] text-zinc-600 uppercase font-bold tracking-widest mt-1">
-                                            Audited on {new Date(roast.created_at).toLocaleDateString()} // Ref: {roast.id.slice(0, 8)}
+                                            Audited on {new Date(roast.created_at).toLocaleDateString()} {"//"} Ref: {roast.id.slice(0, 8)}
                                         </p>
                                     </div>
                                 </div>
@@ -102,6 +106,10 @@ export default function HistoryPage() {
                     </div>
                 )}
             </main>
+
+            <footer className="p-10 border-t border-white/5 text-center">
+                <p className="text-[8px] text-zinc-800 uppercase tracking-widest font-black">DeckSlayer Protocol // Secure Archives</p>
+            </footer>
         </div>
     );
 }
