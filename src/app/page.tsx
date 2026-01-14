@@ -1,14 +1,60 @@
 "use client";
 
-import { ArrowRight, ShieldAlert, Zap, Loader2, Twitter, Skull, BarChart3, Globe, Lock, Download } from "lucide-react";
+import { ArrowRight, ShieldAlert, Zap, Loader2, Twitter, Skull, BarChart3, Globe, Lock, Download, User as UserIcon, LogOut, FileText } from "lucide-react";
 import Link from "next/link";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { SlayerLogo } from "@/components/SlayerLogo";
+import { createClient } from "@/lib/supabase";
+import { User } from "@supabase/supabase-js";
+import { useRouter } from "next/navigation";
 
 export default function Home() {
   const [loading, setLoading] = useState<string | null>(null);
+  const [user, setUser] = useState<User | null>(null);
+  const [credits, setCredits] = useState<number>(0);
+  const supabase = createClient();
+  const router = useRouter();
+
+  useEffect(() => {
+    const fetchUser = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      setUser(user);
+
+      if (user) {
+        // Fetch credits
+        const { data: ledger } = await supabase
+          .from('credits_ledger')
+          .select('amount')
+          .eq('user_id', user.id);
+
+        const total = ledger?.reduce((acc, curr) => acc + curr.amount, 0) || 0;
+        setCredits(total);
+      }
+    };
+
+    fetchUser();
+
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setUser(session?.user ?? null);
+      if (session?.user) {
+        // Refresh credits on auth change
+        fetchUser();
+      }
+    });
+
+    return () => subscription.unsubscribe();
+  }, [supabase]);
+
+  const handleLogout = async () => {
+    await supabase.auth.signOut();
+    router.refresh();
+  };
 
   const handleCheckout = async (productId: string) => {
+    if (!user) {
+      router.push("/auth");
+      return;
+    }
     setLoading(productId);
     try {
       const res = await fetch("/api/checkout", {
@@ -40,10 +86,27 @@ export default function Home() {
           <SlayerLogo className="w-8 h-8" />
           DECKSLAYER
         </div>
-        <div className="hidden md:flex gap-12 text-[10px] uppercase tracking-[0.3em] text-zinc-500 font-bold">
+        <div className="hidden md:flex gap-12 text-[10px] uppercase tracking-[0.3em] text-zinc-500 font-bold items-center">
           <Link href="#methodology" className="hover:text-red-500 transition-colors">Methodology</Link>
           <Link href="#agents" className="hover:text-red-500 transition-colors">The Partners</Link>
-          <Link href="#pricing" className="hover:text-white transition-colors border-b border-red-500/50 pb-1 text-white">Get Audited</Link>
+          {user && (
+            <Link href="/history" className="hover:text-red-500 transition-colors flex items-center gap-2">
+              <FileText size={12} /> Archives
+            </Link>
+          )}
+          {user ? (
+            <div className="flex items-center gap-6 border-l border-white/10 pl-12">
+              <div className="flex flex-col items-end">
+                <span className="text-white font-black">{user.email?.split('@')[0]}</span>
+                <span className="text-red-500 text-[8px] tracking-[0.2em]">{credits} CREDITS</span>
+              </div>
+              <button onClick={handleLogout} className="text-zinc-700 hover:text-white transition-colors">
+                <LogOut size={14} />
+              </button>
+            </div>
+          ) : (
+            <Link href="/auth" className="hover:text-white transition-colors border-b border-red-500/50 pb-1 text-white">Login / Audit</Link>
+          )}
         </div>
       </nav>
 
@@ -51,19 +114,19 @@ export default function Home() {
         {/* HERO SECTION */}
         <section className="space-y-12 relative">
           <div className="absolute -top-20 -left-20 w-64 h-64 bg-red-500/5 blur-[120px] rounded-full -z-10" />
-          
+
           <div className="space-y-6">
             <h1 className="text-7xl md:text-[10rem] font-black tracking-tighter leading-[0.8] uppercase italic">
-              STOP <br />
-              <span className="text-red-500">GUESSING.</span>
+              KILL THE <br />
+              <span className="text-red-500">DELUSION.</span>
             </h1>
             <p className="text-xl md:text-2xl text-zinc-400 max-w-3xl leading-relaxed font-light">
-              You get one shot at a lead partner meeting. Don&apos;t waste it on a narrative that collapses under professional scrutiny. We use adversarial AI to find the flags before they do.
+              Your deck isn&apos;t a pitch; it&apos;s a liability. We use adversarial AI to simulate a Tier-1 Investment Committee. Find the structural flaws before they kill your round.
             </p>
           </div>
-          
+
           <div className="pt-8 flex flex-col md:flex-row gap-8 items-start md:items-center">
-            <button 
+            <button
               onClick={() => handleCheckout("p_one_shot")}
               className="group relative inline-flex items-center gap-8 bg-white text-black px-16 py-10 text-3xl font-black uppercase tracking-tighter hover:bg-red-500 hover:text-white transition-all duration-500 shadow-[15px_15px_0px_rgba(239,68,68,0.2)] active:shadow-none active:translate-x-2 active:translate-y-2"
             >
@@ -95,7 +158,7 @@ export default function Home() {
           <div className="max-w-2xl space-y-6">
             <h2 className="text-4xl font-black uppercase italic tracking-tight border-l-4 border-red-500 pl-8">The Adversarial Moat</h2>
             <p className="text-zinc-500 leading-relaxed">
-              Standard LLMs are aligned for user retention through positive reinforcement. They are fundamentally incapable of giving you the critique a GP gives a Principal when the door is closed. 
+              Standard LLMs are aligned for user retention through positive reinforcement. They are fundamentally incapable of giving you the critique a GP gives a Principal when the door is closed.
             </p>
           </div>
 
@@ -104,9 +167,9 @@ export default function Home() {
               <div className="w-12 h-12 bg-red-500/10 flex items-center justify-center text-red-500 mb-8 border border-red-500/20 group-hover:scale-110 transition-transform">
                 <BarChart3 size={24} />
               </div>
-              <h3 className="text-xl font-black uppercase tracking-tighter italic text-red-500">Narrative Delta</h3>
-              <p className="text-zinc-500 text-[10px] leading-loose uppercase tracking-widest">
-                Our engine identifies the logical disconnect between your &apos;Problem&apos; and &apos;Solution&apos; slides. Most decks fail because the solution doesn&apos;t actually solve the problem stated.
+              <h3 className="text-xl font-black uppercase tracking-tighter italic text-red-500">Structural Diagnostic</h3>
+              <p className="text-zinc-500 text-[10px] leading-loose uppercase tracking-widest leading-relaxed">
+                Our engine performs a slide-by-slide logic audit. We identify the precise moment your narrative loses the room. Most decks fail not on vision, but on internal consistency.
               </p>
             </div>
             <div className="p-16 bg-black space-y-6 group hover:bg-zinc-950 transition-colors border-b border-white/5">
@@ -150,9 +213,9 @@ export default function Home() {
             <div className="space-y-6 text-center md:text-left">
               <div className="aspect-square bg-zinc-900 border border-white/5 flex items-center justify-center text-6xl font-black text-red-500 grayscale opacity-50">S</div>
               <div className="space-y-2">
-                <h4 className="font-black uppercase tracking-widest text-red-500 italic">Sarah // The Skeptic</h4>
+                <h4 className="font-black uppercase tracking-widest text-red-500 italic">Sarah // The Liquidator</h4>
                 <p className="text-[10px] text-zinc-500 uppercase tracking-widest leading-loose">
-                  GP with 20 years experience. Her job is to protect the fund. She looks for "The Big Lie" and focuses on team execution risk.
+                  GP at a SOTA fund. Her job is to filter noise. She looks for "The Big Lie" and execution gaps. If she doesn't believe you, no one will.
                 </p>
               </div>
             </div>
@@ -181,7 +244,7 @@ export default function Home() {
         <section id="pricing" className="mt-60">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-px bg-white/5 border border-white/5">
             <div className="p-20 bg-black space-y-10">
-              <h4 className="font-black uppercase tracking-widest text-[10px] text-zinc-600">Protocol 01 // The Audit</h4>
+              <h4 className="font-black uppercase tracking-widest text-[10px] text-zinc-600">Protocol 01 // The Reckoning</h4>
               <div className="space-y-2">
                 <div className="text-8xl font-black tracking-tighter leading-none italic italic italic">$9</div>
                 <p className="text-[10px] text-zinc-600 uppercase tracking-[0.4em] font-black">Per Diagnostic</p>
@@ -191,7 +254,7 @@ export default function Home() {
                 <li className="flex items-center gap-4"><div className="w-1.5 h-1.5 bg-red-500" /> Killer Question Interrogation</li>
                 <li className="flex items-center gap-4"><div className="w-1.5 h-1.5 bg-red-500" /> Full Slayer&apos;s List</li>
               </ul>
-              <button 
+              <button
                 onClick={() => handleCheckout("p_one_shot")}
                 className="w-full py-6 bg-white text-black font-black uppercase tracking-[0.2em] text-sm hover:bg-red-500 hover:text-white transition-all duration-500"
               >
@@ -201,7 +264,7 @@ export default function Home() {
 
             <div className="p-20 bg-zinc-950 space-y-10 relative overflow-hidden border-l border-white/5">
               <div className="absolute top-0 right-0 bg-red-500 text-white text-[10px] px-8 py-2 font-black uppercase tracking-[0.3em]">High Intent</div>
-              <h4 className="font-black uppercase tracking-widest text-[10px] text-red-500">Protocol 02 // The Iteration</h4>
+              <h4 className="font-black uppercase tracking-widest text-[10px] text-red-500">Protocol 02 // Total Dominance</h4>
               <div className="space-y-2">
                 <div className="text-8xl font-black tracking-tighter leading-none italic italic italic">$19</div>
                 <p className="text-[10px] text-zinc-600 uppercase tracking-[0.4em] font-black">Three Audit Credits</p>
@@ -211,7 +274,7 @@ export default function Home() {
                 <li className="flex items-center gap-4"><div className="w-1.5 h-1.5 bg-red-500" /> 3 Audit Credits ($6 Savings)</li>
                 <li className="flex items-center gap-4"><div className="w-1.5 h-1.5 bg-red-500" /> Confidential PDF Exports</li>
               </ul>
-              <button 
+              <button
                 onClick={() => handleCheckout("p_batch")}
                 className="w-full py-6 bg-red-500 text-white font-black uppercase tracking-[0.2em] text-sm hover:bg-white hover:text-black transition-all duration-500 shadow-[10px_10px_0px_rgba(255,255,255,0.1)]"
               >

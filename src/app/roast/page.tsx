@@ -1,12 +1,14 @@
-"use client";
-
-import { useState } from "react";
-import { ArrowLeft, Loader2, Upload, Skull, Download, Zap, ShieldCheck, Twitter } from "lucide-react";
+import { useEffect, useState } from "react";
+import { ArrowLeft, Loader2, Upload, Skull, Download, Zap, ShieldCheck, Twitter, CreditCard, CheckCircle2, FileText, Lock } from "lucide-react";
 import Link from "next/link";
 import { motion, AnimatePresence } from "framer-motion";
 import html2canvas from "html2canvas";
 import jsPDF from "jspdf";
 import { SlayerLogo } from "@/components/SlayerLogo";
+import { createClient } from "@/lib/supabase";
+import { User } from "@supabase/supabase-js";
+import { useRouter, useSearchParams } from "next/navigation";
+import posthog from "posthog-js";
 
 interface RoastData {
   headline_burn: string;
@@ -18,7 +20,10 @@ interface RoastData {
   narrative_delta: string;
   killer_question: string;
   meeting_transcript: { partner: string; comment: string; a2a_status: string }[];
+  slide_breakdown?: { slide: string; critique: string; score: number }[];
   a2a_metadata: { protocol: string; agents_consulted: string[] };
+  roast_id?: string;
+  pdf_unlocked?: boolean;
 }
 
 export default function RoastPage() {
@@ -29,6 +34,58 @@ export default function RoastPage() {
   const [judgement, setJudgement] = useState<string | null>(null);
   const [judging, setJudging] = useState(false);
   const [exporting, setExporting] = useState(false);
+  const [user, setUser] = useState<User | null>(null);
+  const [credits, setCredits] = useState<number>(0);
+  const [initializing, setInitializing] = useState(true);
+  const [roastId, setRoastId] = useState<string | null>(null);
+  const [pdfUnlocked, setPdfUnlocked] = useState(false);
+  const [checkingPayment, setCheckingPayment] = useState(false);
+
+  const supabase = createClient();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const paymentSuccess = searchParams.get("payment_success") === "true";
+
+  useEffect(() => {
+    const init = async () => {
+      const { data: { user } } = await supabase.auth.getUser();
+      if (!user) {
+        router.push("/auth");
+        return;
+      }
+      setUser(user);
+
+      // Fetch credits
+      const { data: ledger } = await supabase
+        .from('credits_ledger')
+        .select('amount')
+        .eq('user_id', user.id);
+
+      const total = ledger?.reduce((acc, curr) => acc + curr.amount, 0) || 0;
+      setCredits(total);
+
+      const queryRoastId = searchParams.get("roast_id");
+      if (queryRoastId) {
+        setInitializing(true);
+        const { data: roast } = await supabase
+          .from('roasts')
+          .select('pdf_unlocked, result_json')
+          .eq('id', queryRoastId)
+          .single();
+
+        if (roast) {
+          setData(roast.result_json);
+          setPdfUnlocked(roast.pdf_unlocked);
+          setRoastId(queryRoastId);
+        }
+        setInitializing(false);
+      } else {
+        setInitializing(false);
+      }
+    };
+
+    init();
+  }, [supabase, router]);
 
   const exportPDF = async () => {
     const reportElement = document.getElementById("diagnostic-report");
@@ -47,7 +104,7 @@ export default function RoastPage() {
       const pdf = new jsPDF("p", "mm", "a4");
       const pdfWidth = pdf.internal.pageSize.getWidth();
       const pdfHeight = (canvas.height * pdfWidth) / canvas.width;
-      
+
       pdf.addImage(imgData, "PNG", 0, 0, pdfWidth, pdfHeight);
       pdf.save(`DECKSLAYER_DIAGNOSTIC_${new Date().getTime()}.pdf`);
     } catch (err) {
@@ -63,6 +120,7 @@ export default function RoastPage() {
     if (!file) return;
 
     setLoading(true);
+    posthog.capture('audit_initiated', { filename: file.name });
     const formData = new FormData();
     formData.append("file", file);
 
@@ -71,11 +129,28 @@ export default function RoastPage() {
         method: "POST",
         body: formData,
       });
+
+      if (res.status === 402) {
+        alert("System restricted. Your audit quota has been depleted. Please purchase credits.");
+        router.push("/#pricing");
+        return;
+      }
+
       const result = await res.json();
+      if (result.error) throw new Error(result.error);
+
       setData(result);
-    } catch (error) {
+      setRoastId(result.roast_id);
+      setPdfUnlocked(result.pdf_unlocked);
+      posthog.capture('audit_completed', {
+        score: result.fundability_score,
+        roast_id: result.roast_id
+      });
+      // Optimistically decrement credit
+      setCredits(prev => prev - 1);
+    } catch (error: any) {
       console.error(error);
-      alert("The diagnostic was interrupted. Please try again.");
+      alert(error.message || "The diagnostic was interrupted. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -83,11 +158,29 @@ export default function RoastPage() {
 
   const handleInterrogation = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (!data) return;
+
     setJudging(true);
-    setTimeout(() => {
-      setJudgement("Sarah sighs. 'That's a textbook answer, but the A2A market validation still shows a 40% gap in your competitive positioning. You're dodging the real risk.'");
+    try {
+      const res = await fetch("/api/interrogate", {
+        method: "POST",
+        body: JSON.stringify({
+          killerQuestion: data.killer_question,
+          userAnswer: answer,
+          context: `Headline: ${data.headline_burn}. Red Flags: ${data.red_flags.map(f => f.title).join(", ")}`
+        }),
+      });
+      const result = await res.json();
+      setJudgement(result.judgement);
+      posthog.capture('interrogation_defense_delivered', {
+        question: data.killer_question
+      });
+    } catch (err) {
+      console.error(err);
+      setJudgement("Sarah shakes her head. 'The system timed out, but your logic likely would have too. Try again.'");
+    } finally {
       setJudging(false);
-    }, 2000);
+    }
   };
 
   return (
@@ -97,15 +190,40 @@ export default function RoastPage() {
           <SlayerLogo className="w-6 h-6" />
           DECKSLAYER
         </Link>
-        <Link href="/" className="text-[10px] uppercase tracking-widest text-zinc-500 flex items-center gap-2 hover:text-white transition-colors">
-          <ArrowLeft size={12} /> Return
-        </Link>
+        <div className="flex items-center gap-8">
+          {user && (
+            <div className="flex items-center gap-3 bg-red-500/10 border border-red-500/20 px-4 py-1.5 rounded-full">
+              <Zap size={12} className="text-red-500 fill-red-500" />
+              <span className="text-[10px] font-black uppercase tracking-widest text-red-500">{credits} Credits</span>
+            </div>
+          )}
+          <Link href="/history" className="text-[10px] uppercase tracking-widest text-zinc-500 flex items-center gap-2 hover:text-white transition-colors mr-6">
+            <FileText size={12} /> History
+          </Link>
+          <Link href="/" className="text-[10px] uppercase tracking-widest text-zinc-500 flex items-center gap-2 hover:text-white transition-colors">
+            <ArrowLeft size={12} /> Return
+          </Link>
+        </div>
       </nav>
+
+      {paymentSuccess && (
+        <motion.div
+          initial={{ opacity: 0, y: -20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="max-w-xl mx-auto mt-10 p-4 bg-green-500/10 border border-green-500/20 flex items-center gap-4 text-green-500"
+        >
+          <CheckCircle2 size={20} />
+          <div className="flex-grow">
+            <p className="text-[10px] font-black uppercase tracking-widest">Protocol Authenticated</p>
+            <p className="text-[8px] uppercase tracking-widest opacity-70">Payment successful. Credits added to your secure ledger.</p>
+          </div>
+        </motion.div>
+      )}
 
       <main className="max-w-5xl mx-auto px-6 py-20">
         <AnimatePresence mode="wait">
           {!data ? (
-            <motion.div 
+            <motion.div
               key="upload"
               initial={{ opacity: 0, y: 20 }}
               animate={{ opacity: 1, y: 0 }}
@@ -119,8 +237,8 @@ export default function RoastPage() {
 
               <form onSubmit={handleUpload} className="space-y-8">
                 <div className="relative group">
-                  <input 
-                    type="file" 
+                  <input
+                    type="file"
                     accept="application/pdf"
                     onChange={(e) => setFile(e.target.files?.[0] || null)}
                     className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
@@ -133,7 +251,7 @@ export default function RoastPage() {
                   </div>
                 </div>
 
-                <button 
+                <button
                   disabled={!file || loading}
                   className="w-full bg-white text-black py-8 text-2xl font-black uppercase tracking-tighter disabled:opacity-20 hover:bg-red-500 hover:text-white transition-all transform active:scale-[0.99]"
                 >
@@ -147,7 +265,7 @@ export default function RoastPage() {
               </form>
             </motion.div>
           ) : (
-            <motion.div 
+            <motion.div
               key="result"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
@@ -187,7 +305,7 @@ export default function RoastPage() {
                           {data.fundability_score}%
                         </div>
                         <div className="h-1 bg-white/5 w-full">
-                          <div 
+                          <div
                             style={{ width: `${data.fundability_score}%` }}
                             className="h-full bg-red-500 shadow-[0_0_10px_rgba(239,68,68,0.5)]"
                           />
@@ -223,12 +341,12 @@ export default function RoastPage() {
                             {data.headline_burn}
                           </h2>
                         </div>
-                        
+
                         <div className="space-y-12">
                           <h3 className="text-[10px] uppercase tracking-[0.6em] text-zinc-600 font-black flex items-center gap-4">
                             Investment Committee Debate <div className="h-px bg-zinc-800 flex-grow" />
                           </h3>
-                          
+
                           <div className="space-y-16">
                             {data.meeting_transcript.map((item, i) => (
                               <div key={i} className="flex gap-10 group">
@@ -265,12 +383,31 @@ export default function RoastPage() {
                           <div className="grid grid-cols-1 gap-6">
                             {data.slayers_list.map((item, i) => (
                               <div key={i} className="flex items-start gap-6 bg-zinc-900/20 p-6 border border-white/5 hover:border-red-500/20 transition-all group">
-                                <span className="text-red-500 font-black italic text-xl leading-none opacity-30 group-hover:opacity-100 transition-opacity">0{i+1}</span>
+                                <span className="text-red-500 font-black italic text-xl leading-none opacity-30 group-hover:opacity-100 transition-opacity">0{i + 1}</span>
                                 <p className="text-[13px] text-zinc-300 font-bold uppercase tracking-tight leading-normal">{item}</p>
                               </div>
                             ))}
                           </div>
                         </section>
+
+                        {data.slide_breakdown && (
+                          <section className="space-y-10 pt-10">
+                            <h3 className="text-[10px] uppercase tracking-[0.6em] text-zinc-600 font-black border-b border-zinc-900 pb-4 italic">Strategic Slide Breakdown</h3>
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+                              {data.slide_breakdown.map((item, i) => (
+                                <div key={i} className="p-8 border border-white/5 bg-zinc-900/10 space-y-4">
+                                  <div className="flex justify-between items-center">
+                                    <h4 className="text-[10px] font-black uppercase tracking-widest text-red-500">{item.slide}</h4>
+                                    <span className="text-xl font-black italic">{item.score}%</span>
+                                  </div>
+                                  <p className="text-[11px] text-zinc-500 leading-relaxed uppercase font-bold tracking-tighter italic border-l border-white/10 pl-4">
+                                    {item.critique}
+                                  </p>
+                                </div>
+                              ))}
+                            </div>
+                          </section>
+                        )}
                       </div>
                     </div>
                   </div>
@@ -294,13 +431,13 @@ export default function RoastPage() {
                   </p>
                   {!judgement ? (
                     <form onSubmit={handleInterrogation} className="space-y-8">
-                      <textarea 
+                      <textarea
                         value={answer}
                         onChange={(e) => setAnswer(e.target.value)}
                         placeholder="Type your defense..."
                         className="w-full bg-black border border-zinc-800 p-8 text-xl font-bold focus:border-red-500 outline-none transition-all h-56 resize-none placeholder:text-zinc-900 text-white"
                       />
-                      <button 
+                      <button
                         disabled={!answer || judging}
                         className="w-full bg-white text-black py-8 text-2xl font-black uppercase tracking-widest hover:bg-red-500 hover:text-white transition-all disabled:opacity-50 active:scale-[0.98]"
                       >
@@ -308,7 +445,7 @@ export default function RoastPage() {
                       </button>
                     </form>
                   ) : (
-                    <motion.div 
+                    <motion.div
                       initial={{ opacity: 0, x: -20 }}
                       animate={{ opacity: 1, x: 0 }}
                       className="p-10 bg-zinc-900 border-l-8 border-red-500 italic text-red-100 text-2xl leading-relaxed font-bold"
@@ -320,21 +457,46 @@ export default function RoastPage() {
               </section>
 
               <div className="pt-20 border-t border-zinc-900 flex flex-col md:row justify-between items-center gap-12 max-w-5xl mx-auto mb-40">
-                <button 
+                <button
                   onClick={() => setData(null)}
                   className="text-zinc-600 hover:text-white transition-colors text-[10px] uppercase tracking-[0.4em] font-black"
                 >
                   &larr; Slay another candidate
                 </button>
                 <div className="flex flex-col items-center gap-4">
-                  <button 
-                    onClick={exportPDF}
-                    disabled={exporting}
-                    className="bg-red-500 text-white px-16 py-8 font-black uppercase text-base tracking-[0.3em] hover:bg-white hover:text-black transition-all flex items-center gap-6 border-4 border-red-500 shadow-[12px_12px_0px_rgba(255,255,255,0.1)] active:shadow-none active:translate-x-1 active:translate-y-1"
-                  >
-                    {exporting ? <Loader2 className="animate-spin" size={24} /> : <Download size={24} />}
-                    {exporting ? "Generating Report..." : "Get PDF Diagnostic ($5)"}
-                  </button>
+                  {pdfUnlocked ? (
+                    <button
+                      onClick={exportPDF}
+                      disabled={exporting}
+                      className="bg-red-500 text-white px-16 py-8 font-black uppercase text-base tracking-[0.3em] hover:bg-white hover:text-black transition-all flex items-center gap-6 border-4 border-red-500 shadow-[12px_12px_0px_rgba(255,255,255,0.1)] active:shadow-none active:translate-x-1 active:translate-y-1"
+                    >
+                      {exporting ? <Loader2 className="animate-spin" size={24} /> : <Download size={24} />}
+                      {exporting ? "Generating Report..." : "Get PDF Diagnostic"}
+                    </button>
+                  ) : (
+                    <button
+                      onClick={() => {
+                        fetch("/api/checkout", {
+                          method: "POST",
+                          body: JSON.stringify({
+                            productId: "p_pdf_export",
+                            roastId: roastId
+                          }),
+                        })
+                          .then(res => res.json())
+                          .then(data => {
+                            if (data.url) {
+                              posthog.capture('pdf_unlock_initiated', { roast_id: roastId });
+                              window.location.href = data.url;
+                            }
+                          });
+                      }}
+                      className="bg-zinc-800 text-white px-16 py-8 font-black uppercase text-base tracking-[0.3em] hover:bg-red-500 transition-all flex items-center gap-6 border-4 border-zinc-700 hover:border-red-500 shadow-[12px_12px_0px_rgba(255,255,255,0.1)] active:shadow-none active:translate-x-1 active:translate-y-1"
+                    >
+                      <Lock size={24} className="text-red-500" />
+                      Unlock PDF Diagnostic ($5)
+                    </button>
+                  )}
                   <p className="text-zinc-700 text-[8px] uppercase tracking-widest font-black">VC-Ready Format // Confidential Memo Aesthetic</p>
                 </div>
               </div>
