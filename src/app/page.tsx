@@ -1,6 +1,6 @@
 "use client";
 
-import { Skull, ArrowRight, Loader2, Twitter, BarChart3, Globe, Download, LogOut, FileText } from "lucide-react";
+import { ArrowRight, Loader2, Twitter, BarChart3, Globe, Download, LogOut, FileText } from "lucide-react";
 import Link from "next/link";
 import { useEffect, useState } from "react";
 import { SlayerLogo } from "@/components/SlayerLogo";
@@ -9,6 +9,7 @@ import { User } from "@supabase/supabase-js";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { ThemeToggle } from "@/components/ThemeToggle";
+import { Scale } from "lucide-react";
 
 export default function Home() {
   const [loading, setLoading] = useState<string | null>(null);
@@ -75,15 +76,15 @@ export default function Home() {
   };
 
   return (
-    <div className="min-h-screen bg-black text-white font-mono selection:bg-red-500 selection:text-white overflow-x-hidden">
+    <div className="min-h-screen bg-background text-foreground font-mono selection:bg-red-500 selection:text-white overflow-x-hidden transition-colors duration-300">
       {/* GLOBAL STATUS BAR */}
       <div className="w-full bg-red-500 text-black py-1 px-6 text-[10px] font-black uppercase tracking-[0.3em] flex justify-between items-center">
-        <span>SOTA G-3-P ENGINE: OPERATIONAL</span>
+        <span>SOTA G-4-V ENGINE: OPERATIONAL</span>
         <span className="hidden md:block">MARKET SENTIMENT: BEARISH // BAR IS HIGH</span>
-        <span>A2A PROTOCOL V0.2.1</span>
+        <span>A2A PROTOCOL V0.3.0</span>
       </div>
 
-      <nav className="p-8 flex justify-between items-center border-b border-white/5 sticky top-0 bg-black/80 backdrop-blur-xl z-50">
+      <nav className="p-8 flex justify-between items-center border-b border-border sticky top-0 bg-background/80 backdrop-blur-xl z-50 transition-colors duration-300">
         <div className="text-2xl font-black tracking-tighter flex items-center gap-3">
           <SlayerLogo className="w-8 h-8" />
           DECKSLAYER
@@ -93,22 +94,27 @@ export default function Home() {
           <Link href="#agents" className="hover:text-red-500 transition-colors">The Partners</Link>
           <ThemeToggle />
           {user && (
-            <Link href="/history" className="hover:text-red-500 transition-colors flex items-center gap-2">
-              <FileText size={12} /> Archives
-            </Link>
+            <>
+              <Link href="/compare" className="hover:text-red-500 transition-colors flex items-center gap-2">
+                Compare
+              </Link>
+              <Link href="/history" className="hover:text-red-500 transition-colors flex items-center gap-2">
+                <FileText size={12} /> Archives
+              </Link>
+            </>
           )}
           {user ? (
-            <div className="flex items-center gap-6 border-l border-white/10 pl-12">
+            <div className="flex items-center gap-6 border-l border-border pl-12 transition-colors duration-300">
               <div className="flex flex-col items-end">
-                <span className="text-white font-black">{user.email?.split('@')[0]}</span>
+                <span className="text-foreground font-black">{user.email?.split('@')[0]}</span>
                 <span className="text-red-500 text-[8px] tracking-[0.2em]">{credits} CREDITS</span>
               </div>
-              <button onClick={handleLogout} className="text-zinc-700 hover:text-white transition-colors">
+              <button onClick={handleLogout} className="text-muted hover:text-foreground transition-colors">
                 <LogOut size={14} />
               </button>
             </div>
           ) : (
-            <Link href="/auth" className="hover:text-white transition-colors border-b border-red-500/50 pb-1 text-white">Login / Audit</Link>
+            <Link href="/auth" className="hover:text-foreground transition-colors border-b border-red-500/50 pb-1 text-foreground">Login / Audit</Link>
           )}
         </div>
       </nav>
@@ -131,21 +137,22 @@ export default function Home() {
           <div className="pt-8 flex flex-col md:flex-row gap-8 items-start md:items-center">
             <button
               onClick={() => handleCheckout("p_one_shot")}
-              className="group relative inline-flex items-center gap-8 bg-white text-black px-16 py-10 text-3xl font-black uppercase tracking-tighter hover:bg-red-500 hover:text-white transition-all duration-500 shadow-[15px_15px_0px_rgba(239,68,68,0.2)] active:shadow-none active:translate-x-2 active:translate-y-2"
+              className="group relative inline-flex items-center gap-8 bg-foreground text-background px-12 py-8 text-2xl font-black uppercase tracking-tighter hover:bg-red-500 hover:text-white transition-all duration-500 shadow-[10px_10px_0px_rgba(239,68,68,0.2)] active:shadow-none active:translate-x-1 active:translate-y-1"
             >
-              {loading === "p_one_shot" ? <Loader2 className="animate-spin" /> : "Initiate Diagnostic"}
-              <ArrowRight className="group-hover:translate-x-4 transition-transform" size={32} />
+              {loading === "p_one_shot" ? <Loader2 className="animate-spin" /> : "Initiate Audit"}
+              <ArrowRight className="group-hover:translate-x-2 transition-transform" size={24} />
             </button>
-            <div className="text-[10px] text-zinc-600 uppercase tracking-widest leading-loose">
-              NO WAITLISTS. <br />
-              NO SALES CALLS. <br />
-              JUST THE BRUTAL TRUTH.
-            </div>
+            <Link
+              href="/compare"
+              className="group border border-border px-12 py-8 text-xl font-black uppercase tracking-tighter hover:bg-card transition-all"
+            >
+              Compare Decks <span className="text-red-500 font-mono ml-2">NEW</span>
+            </Link>
           </div>
         </section>
 
         {/* LOGO CLOUD / SOCIAL PROOF */}
-        <section className="mt-40 border-y border-white/5 py-12 opacity-30 grayscale hover:opacity-100 transition-opacity duration-1000">
+        <section className="mt-40 border-y border-border py-12 opacity-30 grayscale hover:opacity-100 transition-opacity duration-1000">
           <p className="text-center text-[10px] uppercase tracking-[0.5em] mb-8 font-black text-zinc-500">Designed for founders targeting</p>
           <div className="flex flex-wrap justify-center gap-16 md:gap-32 text-2xl font-black tracking-tighter italic italic">
             <span>YC</span>
@@ -165,41 +172,41 @@ export default function Home() {
             </p>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-px bg-white/5 border border-white/5">
-            <div className="p-16 bg-black space-y-6 group hover:bg-zinc-950 transition-colors border-b border-r border-white/5">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-px bg-border border border-border">
+            <div className="p-16 bg-background space-y-6 group hover:bg-card transition-colors border-b border-r border-border">
               <div className="w-12 h-12 bg-red-500/10 flex items-center justify-center text-red-500 mb-8 border border-red-500/20 group-hover:scale-110 transition-transform">
                 <BarChart3 size={24} />
               </div>
-              <h3 className="text-xl font-black uppercase tracking-tighter italic text-red-500">Structural Diagnostic</h3>
+              <h3 className="text-xl font-black uppercase tracking-tighter italic text-red-500">Real-Time Synthesis</h3>
               <p className="text-zinc-500 text-[10px] leading-loose uppercase tracking-widest leading-relaxed">
-                Our engine performs a slide-by-slide logic audit. We identify the precise moment your narrative loses the room. Most decks fail not on vision, but on internal consistency.
+                Powered by Vercel AI, our engine streams report generation slide-by-slide. Get full narrative consistency checks and structural risk audits in seconds, not hours.
               </p>
             </div>
-            <div className="p-16 bg-black space-y-6 group hover:bg-zinc-950 transition-colors border-b border-white/5">
+            <div className="p-16 bg-background space-y-6 group hover:bg-card transition-colors border-b border-border">
               <div className="w-12 h-12 bg-red-500/10 flex items-center justify-center text-red-500 mb-8 border border-red-500/20 group-hover:scale-110 transition-transform">
-                <Skull size={24} />
+                <Scale size={24} />
               </div>
-              <h3 className="text-xl font-black uppercase tracking-tighter italic text-red-500">The Interrogation</h3>
-              <p className="text-zinc-500 text-[10px] leading-loose uppercase tracking-widest text-white/80">
-                You don&apos;t just read a report. Sarah (The Skeptic) will ask you the single hardest question about your business. Defend your thesis in real-time or lose the room.
+              <h3 className="text-xl font-black uppercase tracking-tighter italic text-red-500">Comparative Analytics</h3>
+              <p className="text-zinc-500 text-[10px] leading-loose uppercase tracking-widest">
+                A/B test your narrative. Upload two versions of your deck and let our Investment Committee determine which one is most likely to survive the first partner meeting.
               </p>
             </div>
-            <div className="p-16 bg-black space-y-6 group hover:bg-zinc-950 transition-colors border-r border-white/5">
+            <div className="p-16 bg-background space-y-6 group hover:bg-card transition-colors border-r border-border">
               <div className="w-12 h-12 bg-red-500/10 flex items-center justify-center text-red-500 mb-8 border border-red-500/20 group-hover:scale-110 transition-transform">
                 <Globe size={24} />
               </div>
-              <h3 className="text-xl font-black uppercase tracking-tighter italic text-red-500">A2A Verification</h3>
+              <h3 className="text-xl font-black uppercase tracking-tighter italic text-red-500">A2A Protocol v0.3</h3>
               <p className="text-zinc-500 text-[10px] leading-loose uppercase tracking-widest">
-                Utilizing the Google A2A SDK, we consult specialized autonomous agents for market validation, unit economic sanity, and competitive landscape accuracy.
+                Utilizing the latest A2A SDK for Agent-to-Agent communication. Sarah, Marcus, and Leo conduct structured parallel audits with cross-agent verification.
               </p>
             </div>
-            <div className="p-16 bg-black space-y-6 group hover:bg-zinc-950 transition-colors">
+            <div className="p-16 bg-background space-y-6 group hover:bg-card transition-colors">
               <div className="w-12 h-12 bg-red-500/10 flex items-center justify-center text-red-500 mb-8 border border-red-500/20 group-hover:scale-110 transition-transform">
                 <Download size={24} />
               </div>
-              <h3 className="text-xl font-black uppercase tracking-tighter italic text-red-500">Confidential Memo</h3>
+              <h3 className="text-xl font-black uppercase tracking-tighter italic text-red-500">IC Internal Memo</h3>
               <p className="text-zinc-500 text-[10px] leading-loose uppercase tracking-widest">
-                Export your diagnostic as a professional, watermarked internal VC memo. Perfect for sharing with co-founders or preparing for the real IC meeting.
+                Unlock professional PDF exports formatted as confidential IC memos. Features a fundability score, red-flag heatmap, and mandatory risk disclosures.
               </p>
             </div>
           </div>
@@ -214,7 +221,7 @@ export default function Home() {
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-12">
             <div className="space-y-6 text-center md:text-left">
-              <div className="aspect-square bg-zinc-900 border border-white/5 flex items-center justify-center text-6xl font-black text-red-500 grayscale opacity-50">S</div>
+              <div className="aspect-square bg-card border border-border flex items-center justify-center text-6xl font-black text-red-500 grayscale opacity-50 transition-colors duration-300">S</div>
               <div className="space-y-2">
                 <h4 className="font-black uppercase tracking-widest text-red-500 italic">Sarah // The Liquidator</h4>
                 <p className="text-[10px] text-zinc-500 uppercase tracking-widest leading-loose">
@@ -223,7 +230,7 @@ export default function Home() {
               </div>
             </div>
             <div className="space-y-6 text-center md:text-left">
-              <div className="aspect-square bg-zinc-900 border border-white/5 flex items-center justify-center text-6xl font-black text-red-500 grayscale opacity-50">M</div>
+              <div className="aspect-square bg-card border border-border flex items-center justify-center text-6xl font-black text-red-500 grayscale opacity-50 transition-colors duration-300">M</div>
               <div className="space-y-2">
                 <h4 className="font-black uppercase tracking-widest text-red-500 italic">Marcus // The Hawk</h4>
                 <p className="text-[10px] text-zinc-500 uppercase tracking-widest leading-loose">
@@ -232,7 +239,7 @@ export default function Home() {
               </div>
             </div>
             <div className="space-y-6 text-center md:text-left">
-              <div className="aspect-square bg-zinc-900 border border-white/5 flex items-center justify-center text-6xl font-black text-red-500 grayscale opacity-50">L</div>
+              <div className="aspect-square bg-card border border-border flex items-center justify-center text-6xl font-black text-red-500 grayscale opacity-50 transition-colors duration-300">L</div>
               <div className="space-y-2">
                 <h4 className="font-black uppercase tracking-widest text-red-500 italic">Leo // The Visionary</h4>
                 <p className="text-[10px] text-zinc-500 uppercase tracking-widest leading-loose">
@@ -245,9 +252,9 @@ export default function Home() {
 
         {/* PRICING SECTION */}
         <section id="pricing" className="mt-60">
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-px bg-white/5 border border-white/5">
-            <div className="p-20 bg-black space-y-10">
-              <h4 className="font-black uppercase tracking-widest text-[10px] text-zinc-600">Protocol 01 // The Reckoning</h4>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-px bg-border border border-border transition-colors duration-300">
+            <div className="p-20 bg-background space-y-10 transition-colors duration-300">
+              <h4 className="font-black uppercase tracking-widest text-[10px] text-muted">Protocol 01 // The Reckoning</h4>
               <div className="space-y-2">
                 <div className="text-8xl font-black tracking-tighter leading-none italic italic italic">$9</div>
                 <p className="text-[10px] text-zinc-600 uppercase tracking-[0.4em] font-black">Per Diagnostic</p>
@@ -259,13 +266,13 @@ export default function Home() {
               </ul>
               <button
                 onClick={() => handleCheckout("p_one_shot")}
-                className="w-full py-6 bg-white text-black font-black uppercase tracking-[0.2em] text-sm hover:bg-red-500 hover:text-white transition-all duration-500"
+                className="w-full py-6 bg-foreground text-background font-black uppercase tracking-[0.2em] text-sm hover:bg-red-500 hover:text-white transition-all duration-500"
               >
                 {loading === "p_one_shot" ? "Authenticating..." : "Purchase Access"}
               </button>
             </div>
 
-            <div className="p-20 bg-zinc-950 space-y-10 relative overflow-hidden border-l border-white/5">
+            <div className="p-20 bg-card space-y-10 relative overflow-hidden border-l border-border transition-colors duration-300">
               <div className="absolute top-0 right-0 bg-red-500 text-white text-[10px] px-8 py-2 font-black uppercase tracking-[0.3em]">High Intent</div>
               <h4 className="font-black uppercase tracking-widest text-[10px] text-red-500">Protocol 02 // Total Dominance</h4>
               <div className="space-y-2">
@@ -274,7 +281,8 @@ export default function Home() {
               </div>
               <ul className="text-[10px] text-zinc-400 space-y-6 uppercase tracking-widest font-black">
                 <li className="flex items-center gap-4"><div className="w-1.5 h-1.5 bg-red-500" /> All Protocol 01 Features</li>
-                <li className="flex items-center gap-4"><div className="w-1.5 h-1.5 bg-red-500" /> 3 Audit Credits ($6 Savings)</li>
+                <li className="flex items-center gap-4"><div className="w-1.5 h-1.5 bg-red-500" /> Comparative Analysis Unlocked</li>
+                <li className="flex items-center gap-4"><div className="w-1.5 h-1.5 bg-red-500" /> 3 Audit Credits ($8 Savings)</li>
                 <li className="flex items-center gap-4"><div className="w-1.5 h-1.5 bg-red-500" /> Confidential PDF Exports</li>
               </ul>
               <button
@@ -289,7 +297,7 @@ export default function Home() {
 
         {/* FAQ / REBUTTAL SECTION */}
         <section className="mt-60 max-w-3xl mx-auto space-y-20">
-          <h2 className="text-3xl font-black uppercase tracking-tighter italic border-b border-white/10 pb-4">Internal Objections</h2>
+          <h2 className="text-3xl font-black uppercase tracking-tighter italic border-b border-border pb-4 transition-colors duration-300">Internal Objections</h2>
           <div className="space-y-16">
             <div className="space-y-4">
               <h4 className="text-red-500 font-black uppercase text-xs tracking-widest">Q: Why not just use Gemini or ChatGPT?</h4>
@@ -310,7 +318,7 @@ export default function Home() {
         </section>
       </main>
 
-      <footer className="p-24 border-t border-white/5 bg-zinc-950">
+      <footer className="p-24 border-t border-border bg-card transition-colors duration-300">
         <div className="max-w-6xl mx-auto grid grid-cols-1 md:grid-cols-2 gap-24">
           <div className="space-y-8">
             <div className="text-2xl font-black tracking-tighter flex items-center gap-3">

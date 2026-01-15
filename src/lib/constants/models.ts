@@ -10,7 +10,10 @@ export const AI_MODELS = {
     // Powerhouse model for synthesis and complex reasoning
     ORCHESTRATOR_MODEL: "gemini-1.5-flash", // Can be upgraded to gemini-1.5-pro for higher fidelity
 
-    // Advesarial model for the interrogation section
+    // Synthesis model for comparative analysis
+    SYNTHESIS_MODEL: "gemini-1.5-flash",
+
+    // Adversarial model for the interrogation section
     ADVERSARIAL_MODEL: "gemini-1.5-flash",
 } as const;
 

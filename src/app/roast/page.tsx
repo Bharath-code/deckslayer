@@ -216,23 +216,24 @@ function RoastPageContent() {
   };
 
   return (
-    <div className="min-h-screen bg-black text-white font-mono selection:bg-red-500">
-      <nav className="p-6 flex justify-between items-center border-b border-white/5">
+    <div className="min-h-screen bg-background text-foreground font-mono selection:bg-red-500 transition-colors duration-300">
+      <nav className="p-6 flex justify-between items-center border-b border-border transition-colors duration-300">
         <Link href="/" className="text-xl font-black tracking-tighter flex items-center gap-3">
           <SlayerLogo className="w-6 h-6" />
           DECKSLAYER
         </Link>
         <div className="flex items-center gap-8">
+          <ThemeToggle />
           {user && (
             <div className="flex items-center gap-3 bg-red-500/10 border border-red-500/20 px-4 py-1.5 rounded-full">
               <Zap size={12} className="text-red-500 fill-red-500" />
               <span className="text-[10px] font-black uppercase tracking-widest text-red-500">{credits} Credits</span>
             </div>
           )}
-          <Link href="/history" className="text-[10px] uppercase tracking-widest text-zinc-500 flex items-center gap-2 hover:text-white transition-colors mr-6">
+          <Link href="/history" className="text-[10px] uppercase tracking-widest text-muted flex items-center gap-2 hover:text-foreground transition-colors mr-6">
             <FileText size={12} /> History
           </Link>
-          <Link href="/" className="text-[10px] uppercase tracking-widest text-zinc-500 flex items-center gap-2 hover:text-white transition-colors">
+          <Link href="/" className="text-[10px] uppercase tracking-widest text-muted flex items-center gap-2 hover:text-foreground transition-colors">
             <ArrowLeft size={12} /> Return
           </Link>
         </div>
@@ -275,9 +276,9 @@ function RoastPageContent() {
                     onChange={(e) => setFile(e.target.files?.[0] || null)}
                     className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
                   />
-                  <div className="border border-zinc-800 group-hover:border-red-500/50 p-24 flex flex-col items-center justify-center gap-6 transition-all bg-zinc-900/10 backdrop-blur-sm">
-                    <Upload className="text-zinc-700 group-hover:text-red-500 transition-colors" size={32} />
-                    <span className="text-zinc-500 uppercase tracking-[0.3em] text-[10px] font-black">
+                  <div className="border border-border group-hover:border-red-500/50 p-24 flex flex-col items-center justify-center gap-6 transition-all bg-card/10 backdrop-blur-sm">
+                    <Upload className="text-muted group-hover:text-red-500 transition-colors" size={32} />
+                    <span className="text-muted uppercase tracking-[0.3em] text-[10px] font-black group-hover:text-foreground">
                       {file ? file.name : "Select Pitch Deck (PDF)"}
                     </span>
                   </div>
@@ -285,7 +286,7 @@ function RoastPageContent() {
 
                 <button
                   disabled={!file || loading}
-                  className="w-full bg-white text-black py-8 text-2xl font-black uppercase tracking-tighter disabled:opacity-20 hover:bg-red-500 hover:text-white transition-all transform active:scale-[0.99]"
+                  className="w-full bg-foreground text-background py-8 text-2xl font-black uppercase tracking-tighter disabled:opacity-20 hover:bg-red-500 hover:text-white transition-all transform active:scale-[0.99]"
                 >
                   {loading ? (
                     <div className="flex items-center justify-center gap-3">
@@ -304,39 +305,39 @@ function RoastPageContent() {
               className="space-y-12"
             >
               {/* THE REPORT CONTAINER */}
-              <div id="diagnostic-report" className="bg-black p-12 border-[12px] border-zinc-900 relative overflow-hidden text-white">
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 -rotate-45 text-zinc-900/10 text-[12rem] font-black pointer-events-none select-none uppercase">
+              <div id="diagnostic-report" className="bg-background p-12 border-[12px] border-border relative overflow-hidden text-foreground transition-colors duration-300">
+                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 -rotate-45 text-muted opacity-5 text-[12rem] font-black pointer-events-none select-none uppercase">
                   Confidential
                 </div>
 
                 <div className="relative z-10">
-                  <div className="flex justify-between items-center mb-16 border-b border-zinc-800 pb-10 text-white">
+                  <div className="flex justify-between items-center mb-16 border-b border-border pb-10">
                     <div className="flex items-center gap-5">
                       <div className="bg-red-500 p-4">
                         <SlayerLogo className="text-white" />
                       </div>
                       <div>
                         <h1 className="text-3xl font-black uppercase tracking-tighter leading-none">DECKSLAYER</h1>
-                        <p className="text-[10px] text-zinc-500 uppercase tracking-[0.5em] font-black mt-1">Strategic Audit // V0.2.1</p>
+                        <p className="text-[10px] text-muted uppercase tracking-[0.5em] font-black mt-1">Strategic Audit // V0.2.1</p>
                       </div>
                     </div>
                     <div className="text-right flex flex-col items-end gap-3">
-                      <div className="flex items-center gap-2 bg-zinc-900 px-4 py-1.5 border border-white/5">
+                      <div className="flex items-center gap-2 bg-card px-4 py-1.5 border border-border">
                         <Zap size={10} className="text-yellow-500 fill-yellow-500" />
-                        <span className="text-[9px] font-black uppercase tracking-[0.2em] text-zinc-400 font-mono">SOTA G-3-P Audit</span>
+                        <span className="text-[9px] font-black uppercase tracking-[0.2em] text-muted font-mono">SOTA G-3-P Audit</span>
                       </div>
-                      <p className="text-[9px] text-zinc-600 uppercase font-black tracking-[0.3em]">REF: DS-{Math.floor(Math.random() * 1000000)}</p>
+                      <p className="text-[9px] text-muted uppercase font-black tracking-[0.3em]">REF: DS-{Math.floor(Math.random() * 1000000)}</p>
                     </div>
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-12 gap-16">
                     <div className="md:col-span-4 space-y-10">
-                      <div className="p-10 border border-white/10 bg-zinc-900/30 relative overflow-hidden group hover:border-red-500/30 transition-all">
-                        <h3 className="text-[9px] uppercase tracking-[0.4em] font-black mb-4 text-zinc-500">Fundability Gauge</h3>
+                      <div className="p-10 border border-border bg-card relative overflow-hidden group hover:border-red-500/30 transition-all">
+                        <h3 className="text-[9px] uppercase tracking-[0.4em] font-black mb-4 text-muted">Fundability Gauge</h3>
                         <div className="text-9xl font-black italic tracking-tighter mb-6 leading-none">
                           {data.fundability_score}%
                         </div>
-                        <div className="h-1 bg-white/5 w-full">
+                        <div className="h-1 bg-muted/10 w-full">
                           <div
                             style={{ width: `${data.fundability_score}%` }}
                             className="h-full bg-red-500 shadow-[0_0_10px_rgba(239,68,68,0.5)]"
@@ -344,7 +345,7 @@ function RoastPageContent() {
                         </div>
                         <div className="mt-6 flex items-center gap-2">
                           <ShieldCheck size={12} className="text-red-500" />
-                          <span className="text-[9px] font-black uppercase tracking-[0.2em] text-zinc-400">IC Verified Output</span>
+                          <span className="text-[9px] font-black uppercase tracking-[0.2em] text-muted">IC Verified Output</span>
                         </div>
                       </div>
 
@@ -358,9 +359,9 @@ function RoastPageContent() {
                         </p>
                       </div>
 
-                      <div className="p-10 border border-zinc-800 bg-zinc-900/40 space-y-5">
-                        <h3 className="text-[9px] uppercase tracking-[0.4em] font-black text-zinc-600 font-mono italic">Market Intel</h3>
-                        <p className="text-[11px] text-zinc-400 leading-loose uppercase tracking-tighter border-l border-red-500/50 pl-6">
+                      <div className="p-10 border border-border bg-card space-y-5">
+                        <h3 className="text-[9px] uppercase tracking-[0.4em] font-black text-muted font-mono italic">Market Intel</h3>
+                        <p className="text-[11px] text-muted leading-loose uppercase tracking-tighter border-l border-red-500/50 pl-6 opacity-80">
                           {data.market_benchmark}
                         </p>
                       </div>
@@ -375,24 +376,24 @@ function RoastPageContent() {
                         </div>
 
                         <div className="space-y-12">
-                          <h3 className="text-[10px] uppercase tracking-[0.6em] text-zinc-600 font-black flex items-center gap-4">
-                            Investment Committee Debate <div className="h-px bg-zinc-800 flex-grow" />
+                          <h3 className="text-[10px] uppercase tracking-[0.6em] text-muted font-black flex items-center gap-4">
+                            Investment Committee Debate <div className="h-px bg-border flex-grow" />
                           </h3>
 
                           <div className="space-y-16">
                             {data.meeting_transcript.map((item, i) => (
                               <div key={i} className="flex gap-10 group">
-                                <div className="flex-shrink-0 w-16 h-16 bg-zinc-900 border border-white/5 flex items-center justify-center font-black text-2xl text-red-500 grayscale group-hover:grayscale-0 transition-all">
+                                <div className="flex-shrink-0 w-16 h-16 bg-card border border-border flex items-center justify-center font-black text-2xl text-red-500 grayscale group-hover:grayscale-0 transition-all duration-300">
                                   {item.partner[0]}
                                 </div>
                                 <div className="space-y-4">
-                                  <div className="flex items-center gap-4 text-white">
+                                  <div className="flex items-center gap-4 text-foreground transition-colors duration-300">
                                     <h4 className="text-[10px] font-black uppercase tracking-[0.3em] text-red-500/70">{item.partner}</h4>
-                                    <span className="text-[7px] bg-white/5 text-zinc-500 px-2 py-0.5 uppercase font-black tracking-widest border border-white/5">
+                                    <span className="text-[7px] bg-card text-muted px-2 py-0.5 uppercase font-black tracking-widest border border-border transition-colors duration-300">
                                       {item.a2a_status} via A2A
                                     </span>
                                   </div>
-                                  <p className="text-zinc-400 leading-relaxed italic text-[15px] font-medium pr-12">
+                                  <p className="text-muted leading-relaxed italic text-[15px] font-medium pr-12 transition-colors duration-300">
                                     &ldquo;{item.comment}&rdquo;
                                   </p>
                                 </div>
@@ -404,19 +405,19 @@ function RoastPageContent() {
 
                       <div className="grid grid-cols-1 gap-20 text-white">
                         <section className="space-y-8">
-                          <h3 className="text-[10px] uppercase tracking-[0.6em] text-zinc-600 font-black border-b border-zinc-900 pb-4 italic">Narrative Logic Delta</h3>
-                          <p className="text-[13px] text-zinc-400 leading-[1.8] font-medium bg-zinc-900/10 p-10 italic border-r border-red-500/30">
+                          <h3 className="text-[10px] uppercase tracking-[0.6em] text-muted font-black border-b border-border pb-4 italic transition-colors duration-300">Narrative Logic Delta</h3>
+                          <p className="text-[13px] text-muted leading-[1.8] font-medium bg-card p-10 italic border-r border-red-500/30 transition-colors duration-300">
                             {data.narrative_delta}
                           </p>
                         </section>
 
                         <section className="space-y-10">
-                          <h3 className="text-[10px] uppercase tracking-[0.6em] text-zinc-600 font-black border-b border-zinc-900 pb-4">The Slayer&apos;s List (To Fix)</h3>
+                          <h3 className="text-[10px] uppercase tracking-[0.6em] text-muted font-black border-b border-border pb-4 transition-colors duration-300">The Slayer&apos;s List (To Fix)</h3>
                           <div className="grid grid-cols-1 gap-6">
                             {data.slayers_list.map((item, i) => (
-                              <div key={i} className="flex items-start gap-6 bg-zinc-900/20 p-6 border border-white/5 hover:border-red-500/20 transition-all group">
+                              <div key={i} className="flex items-start gap-6 bg-card p-6 border border-border hover:border-red-500/20 transition-all group">
                                 <span className="text-red-500 font-black italic text-xl leading-none opacity-30 group-hover:opacity-100 transition-opacity">0{i + 1}</span>
-                                <p className="text-[13px] text-zinc-300 font-bold uppercase tracking-tight leading-normal">{item}</p>
+                                <p className="text-[13px] text-muted font-bold uppercase tracking-tight leading-normal group-hover:text-foreground transition-colors duration-300">{item}</p>
                               </div>
                             ))}
                           </div>
@@ -427,12 +428,12 @@ function RoastPageContent() {
                             <h3 className="text-[10px] uppercase tracking-[0.6em] text-zinc-600 font-black border-b border-zinc-900 pb-4 italic">Strategic Slide Breakdown</h3>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
                               {data.slide_breakdown.map((item, i) => (
-                                <div key={i} className="p-8 border border-white/5 bg-zinc-900/10 space-y-4">
+                                <div key={i} className="p-8 border border-border bg-card space-y-4 transition-colors duration-300">
                                   <div className="flex justify-between items-center">
                                     <h4 className="text-[10px] font-black uppercase tracking-widest text-red-500">{item.slide}</h4>
-                                    <span className="text-xl font-black italic">{item.score}%</span>
+                                    <span className="text-xl font-black italic text-foreground">{item.score}%</span>
                                   </div>
-                                  <p className="text-[11px] text-zinc-500 leading-relaxed uppercase font-bold tracking-tighter italic border-l border-white/10 pl-4">
+                                  <p className="text-[11px] text-muted leading-relaxed uppercase font-bold tracking-tighter italic border-l border-border pl-4 transition-colors duration-300">
                                     {item.critique}
                                   </p>
                                 </div>
@@ -444,7 +445,7 @@ function RoastPageContent() {
                     </div>
                   </div>
 
-                  <div className="mt-32 pt-10 border-t border-zinc-900 flex justify-between items-center opacity-30 italic font-mono">
+                  <div className="mt-32 pt-10 border-t border-border flex justify-between items-center opacity-30 italic font-mono transition-colors duration-300">
                     <p className="text-[7px] uppercase tracking-[0.4em]">DeckSlayer Protocol \u00a9 2026 // End Of Transmission</p>
                     <p className="text-[7px] uppercase tracking-[0.4em]">SOTA G-3-P VERIFIED</p>
                   </div>
@@ -467,7 +468,7 @@ function RoastPageContent() {
                         value={answer}
                         onChange={(e) => setAnswer(e.target.value)}
                         placeholder="Type your defense..."
-                        className="w-full bg-black border border-zinc-800 p-8 text-xl font-bold focus:border-red-500 outline-none transition-all h-56 resize-none placeholder:text-zinc-900 text-white"
+                        className="w-full bg-background border border-border p-8 text-xl font-bold focus:border-red-500 outline-none transition-all h-56 resize-none placeholder:text-muted/20 text-foreground"
                       />
                       <button
                         disabled={!answer || judging}
@@ -491,7 +492,7 @@ function RoastPageContent() {
               <div className="pt-20 border-t border-zinc-900 flex flex-col md:row justify-between items-center gap-12 max-w-5xl mx-auto mb-40">
                 <button
                   onClick={() => setData(null)}
-                  className="text-zinc-600 hover:text-white transition-colors text-[10px] uppercase tracking-[0.4em] font-black"
+                  className="text-muted hover:text-foreground transition-all duration-300 text-[10px] uppercase tracking-[0.4em] font-black"
                 >
                   &larr; Slay another candidate
                 </button>
@@ -529,7 +530,7 @@ function RoastPageContent() {
                       Unlock PDF Diagnostic ($5)
                     </button>
                   )}
-                  <p className="text-zinc-700 text-[8px] uppercase tracking-widest font-black">VC-Ready Format // Confidential Memo Aesthetic</p>
+                  <p className="text-muted text-[8px] uppercase tracking-widest font-black opacity-50">VC-Ready Format // Confidential Memo Aesthetic</p>
                 </div>
               </div>
             </motion.div>
@@ -537,7 +538,7 @@ function RoastPageContent() {
         </AnimatePresence>
       </main>
 
-      <footer className="p-20 border-t border-white/5 grid grid-cols-1 md:grid-cols-2 gap-12 text-zinc-700 font-mono">
+      <footer className="p-20 border-t border-border transition-colors duration-300 grid grid-cols-1 md:grid-cols-2 gap-12 text-muted font-mono">
         <div className="space-y-4">
           <div className="flex items-center gap-3">
             <SlayerLogo className="w-5 h-5 opacity-30" />
@@ -549,9 +550,9 @@ function RoastPageContent() {
         </div>
         <div className="flex flex-col md:items-end justify-center space-y-4">
           <div className="flex gap-8">
-            <Link href="https://twitter.com/deckslayer" className="hover:text-red-500 transition-colors opacity-30 hover:opacity-100"><Twitter size={16} /></Link>
+            <Link href="https://twitter.com/deckslayer" className="text-muted hover:text-red-500 transition-colors opacity-50 hover:opacity-100"><Twitter size={16} /></Link>
           </div>
-          <p className="text-[8px] uppercase tracking-[0.3em]">Built for the hard truth.</p>
+          <p className="text-[8px] uppercase tracking-[0.3em] text-muted">Built for the hard truth.</p>
         </div>
       </footer>
     </div>
