@@ -60,3 +60,22 @@ export const orchestratorCard: AgentCard = {
         { id: "synthesis", name: "Report Synthesis", description: "Synthesizing divergent agent reports into a coordinated diagnostic.", tags: ["synthesis", "orchestration"] }
     ]
 };
+
+// Internal-Only Agent: The Oracle
+// This agent extracts macro-level metadata for internal trend analysis.
+// Its output is NEVER shared with users.
+export const oracleCard: AgentCard = {
+    name: "The Oracle",
+    description: "Internal intelligence agent for sector classification, stage detection, and narrative fingerprinting.",
+    protocolVersion: "1.0.0",
+    version: "1.0.0",
+    url: `${BASE_URL}/api/internal/oracle`,
+    defaultInputModes: ["text/plain"],
+    defaultOutputModes: ["application/json"],
+    capabilities: { streaming: false },
+    skills: [
+        { id: "sector-classification", name: "Sector Classification", description: "Identifies the startup's primary industry and sub-sector.", tags: ["sector", "classification"] },
+        { id: "stage-detection", name: "Stage Detection", description: "Determines the funding stage and requested capital.", tags: ["stage", "funding"] },
+        { id: "narrative-fingerprinting", name: "Narrative Fingerprinting", description: "Extracts key claims and buzzwords from the pitch.", tags: ["narrative", "trends"] }
+    ]
+};

@@ -39,6 +39,18 @@ export async function proxy(request: NextRequest) {
         return NextResponse.redirect(new URL('/auth', request.url))
     }
 
+    // Protect internal routes - only allow admin emails
+    const ADMIN_EMAILS = (process.env.ADMIN_EMAILS || '').split(',').map(e => e.trim().toLowerCase());
+    if (request.nextUrl.pathname.startsWith('/internal')) {
+        if (!user) {
+            return NextResponse.redirect(new URL('/auth', request.url))
+        }
+        if (!ADMIN_EMAILS.includes(user.email?.toLowerCase() || '')) {
+            // Not an admin - redirect to home
+            return NextResponse.redirect(new URL('/', request.url))
+        }
+    }
+
     // If logged in and on /auth, redirect to home
     if (request.nextUrl.pathname.startsWith('/auth') && user) {
         return NextResponse.redirect(new URL('/', request.url))

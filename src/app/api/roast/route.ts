@@ -1,12 +1,15 @@
 import { NextRequest, NextResponse } from "next/server";
 // @ts-expect-error: pdf-parse lacks proper ESM types
 import PDFParser from "pdf-parse/lib/pdf-parse.js";
+// Note: streamObject is deprecated in AI SDK 6.0, but still functional.
+// Future migration to streamText+Output when API stabilizes.
 import { streamObject, generateText } from "ai";
 import { google } from "@ai-sdk/google";
 import { createServerClient } from "@supabase/ssr";
 import { cookies } from "next/headers";
-import { sarahCard, marcusCard, leoCard, orchestratorCard } from "@/lib/a2a/agents";
+import { sarahCard, marcusCard, leoCard, orchestratorCard, oracleCard } from "@/lib/a2a/agents";
 import { AuditReportSchema } from "@/lib/schemas/audit";
+import { MarketInsightSchema } from "@/lib/schemas/marketInsight";
 import { AI_MODELS } from "@/lib/constants/models";
 
 // Standardized A2A Agent Configuration
@@ -127,14 +130,21 @@ export async function POST(req: NextRequest) {
           const pdfUnlockedByBatch = (batchCheck && batchCheck.length > 0);
 
           // Save roast to DB
-          await supabase
+          const { data: roastRecord } = await supabase
             .from('roasts')
             .insert({
               user_id: user.id,
               deck_name: fileName,
               result_json: object,
               pdf_unlocked: pdfUnlockedByBatch
-            });
+            })
+            .select('id')
+            .single();
+
+          // INTERNAL: Extract market intelligence using The Oracle (async, non-blocking)
+          if (roastRecord?.id) {
+            extractMarketIntelligence(deckText, roastRecord.id, object.fundability_score, supabase).catch(console.error);
+          }
         }
       }
     });
@@ -144,5 +154,54 @@ export async function POST(req: NextRequest) {
   } catch (error) {
     console.error("Vercel AI SDK Roast error:", error);
     return NextResponse.json({ error: "Roast failed" }, { status: 500 });
+  }
+}
+
+// INTERNAL: The Oracle - Market Intelligence Extraction
+// This runs asynchronously AFTER the user response is sent.
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+async function extractMarketIntelligence(deckText: string, roastId: string, fundabilityScore: number, supabase: any) {
+  try {
+    const oracleResult = await generateText({
+      model: google(AI_MODELS.ANALYSIS_MODEL),
+      prompt: `PROTOCOL: ${IC_AGENT_PROTOCOL}
+AGENT_CARD: ${JSON.stringify(oracleCard)}
+TASK: You are an internal intelligence agent. Extract macro-level metadata from this pitch deck for trend analysis.
+
+Deck content: ${deckText.slice(0, 8000)}
+
+Respond ONLY with valid JSON matching this schema:
+- sector: one of "SaaS", "Fintech", "AI/ML", "Crypto/Web3", "Healthcare", "E-commerce", "Consumer", "Climate/CleanTech", "Enterprise", "EdTech", "Other"
+- sub_sector: optional string (more granular)
+- stage: one of "Pre-Seed", "Seed", "Series A", "Series B+", "Unknown"
+- funding_target_usd: optional number
+- narrative_tags: array of strings (key buzzwords like "AI-native", "10x claim", "winner-take-all")
+- primary_claim: string (the single biggest claim)
+- red_flag_severity: one of "low", "medium", "high", "critical"
+
+JSON only, no markdown or explanation.`
+    });
+
+    // Parse Oracle response
+    const parsed = MarketInsightSchema.safeParse(JSON.parse(oracleResult.text));
+
+    if (parsed.success) {
+      await supabase.from('market_insights').insert({
+        roast_id: roastId,
+        sector: parsed.data.sector,
+        sub_sector: parsed.data.sub_sector,
+        stage: parsed.data.stage,
+        funding_target_usd: parsed.data.funding_target_usd,
+        narrative_tags: parsed.data.narrative_tags,
+        primary_claim: parsed.data.primary_claim,
+        fundability_score: fundabilityScore,
+        red_flag_severity: parsed.data.red_flag_severity
+      });
+      console.log(`[Oracle] Market insight extracted for roast ${roastId}`);
+    } else {
+      console.error("[Oracle] Schema validation failed:", parsed.error);
+    }
+  } catch (err) {
+    console.error("[Oracle] Extraction failed:", err);
   }
 }

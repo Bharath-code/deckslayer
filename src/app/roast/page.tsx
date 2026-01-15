@@ -12,6 +12,7 @@ import { User } from "@supabase/supabase-js";
 import { useRouter, useSearchParams } from "next/navigation";
 import posthog from "posthog-js";
 import { toast } from "sonner";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 interface RoastData {
   headline_burn: string;
