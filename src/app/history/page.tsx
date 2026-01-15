@@ -2,10 +2,12 @@
 
 import { useEffect, useState } from "react";
 import { createClient } from "@/lib/supabase";
-import { ArrowLeft, FileText, Loader2, Lock, Unlock } from "lucide-react";
+import { ArrowLeft, FileText, Lock, Unlock } from "lucide-react";
 import Link from "next/link";
 import { SlayerLogo } from "@/components/SlayerLogo";
 import { useRouter } from "next/navigation";
+import { HistoryPageSkeleton } from "@/components/Skeleton";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 interface RoastRecord {
     id: string;
@@ -42,31 +44,32 @@ export default function HistoryPage() {
     }, [supabase, router]);
 
     return (
-        <div className="min-h-screen bg-black text-white font-mono selection:bg-red-500">
-            <nav className="p-6 flex justify-between items-center border-b border-white/5">
+        <div className="min-h-screen bg-[var(--background)] text-[var(--foreground)] font-mono selection:bg-red-500">
+            <nav className="p-6 flex justify-between items-center border-b border-[var(--border)]">
                 <Link href="/" className="text-xl font-black tracking-tighter flex items-center gap-3">
                     <SlayerLogo className="w-6 h-6" />
                     DECKSLAYER
                 </Link>
-                <Link href="/" className="text-[10px] uppercase tracking-widest text-zinc-500 flex items-center gap-2 hover:text-white transition-colors">
-                    <ArrowLeft size={12} /> Return
-                </Link>
+                <div className="flex items-center gap-4">
+                    <ThemeToggle />
+                    <Link href="/" className="text-[10px] uppercase tracking-widest text-zinc-500 flex items-center gap-2 hover:text-[var(--foreground)] transition-colors">
+                        <ArrowLeft size={12} /> Return
+                    </Link>
+                </div>
             </nav>
 
             <main className="max-w-5xl mx-auto px-6 py-20">
                 <header className="mb-16 space-y-4">
                     <h1 className="text-5xl font-black uppercase italic tracking-tighter">Audit Archives.</h1>
-                    <p className="text-zinc-500 text-[10px] tracking-[0.3em] uppercase font-bold">Confidential History // {roasts.length} Records Detected</p>
+                    <p className="text-zinc-500 text-[10px] tracking-[0.3em] uppercase font-bold">Confidential History {"//"} {roasts.length} Records Detected</p>
                 </header>
 
                 {loading ? (
-                    <div className="flex items-center justify-center py-40">
-                        <Loader2 className="animate-spin text-red-500" size={32} />
-                    </div>
+                    <HistoryPageSkeleton />
                 ) : roasts.length === 0 ? (
-                    <div className="text-center py-40 border border-zinc-900 bg-zinc-900/10">
+                    <div className="text-center py-40 border border-zinc-900 bg-[var(--card)]">
                         <p className="text-zinc-600 uppercase tracking-widest text-[10px] font-black">No diagnostic records found.</p>
-                        <Link href="/roast" className="mt-8 inline-block bg-white text-black px-10 py-4 font-black uppercase text-[10px] tracking-widest hover:bg-red-500 hover:text-white transition-all">
+                        <Link href="/roast" className="mt-8 inline-block bg-[var(--foreground)] text-[var(--background)] px-10 py-4 font-black uppercase text-[10px] tracking-widest hover:bg-red-500 hover:text-white transition-all">
                             Initiate First Audit
                         </Link>
                     </div>
@@ -76,7 +79,7 @@ export default function HistoryPage() {
                             <Link
                                 key={roast.id}
                                 href={`/roast?roast_id=${roast.id}`}
-                                className="group p-8 border border-zinc-900 bg-zinc-900/10 hover:border-red-500/30 transition-all flex items-center justify-between"
+                                className="group p-8 border border-[var(--border)] bg-[var(--card)] hover:border-red-500/30 transition-all flex items-center justify-between"
                             >
                                 <div className="flex items-center gap-8">
                                     <div className="w-12 h-12 bg-zinc-900 border border-white/5 flex items-center justify-center group-hover:bg-red-500/10 transition-colors">
@@ -91,7 +94,7 @@ export default function HistoryPage() {
                                 </div>
                                 <div className="flex items-center gap-10">
                                     <div className="flex flex-col items-end">
-                                        <span className="text-2xl font-black italic text-zinc-400 group-hover:text-white transition-colors">{roast.result_json.fundability_score}%</span>
+                                        <span className="text-2xl font-black italic text-zinc-400 group-hover:text-[var(--foreground)] transition-colors">{roast.result_json.fundability_score}%</span>
                                         <span className="text-[8px] uppercase tracking-widest text-zinc-700 font-black">Fundability</span>
                                     </div>
                                     <div className="h-10 w-px bg-zinc-900" />
@@ -107,8 +110,8 @@ export default function HistoryPage() {
                 )}
             </main>
 
-            <footer className="p-10 border-t border-white/5 text-center">
-                <p className="text-[8px] text-zinc-800 uppercase tracking-widest font-black">DeckSlayer Protocol // Secure Archives</p>
+            <footer className="p-10 border-t border-[var(--border)] text-center">
+                <p className="text-[8px] text-zinc-800 uppercase tracking-widest font-black">DeckSlayer Protocol {"//"} Secure Archives</p>
             </footer>
         </div>
     );

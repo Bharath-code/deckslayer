@@ -30,6 +30,7 @@
     "posthog-js": "^1.321.0",
     "react": "19.2.3",
     "react-dom": "19.2.3",
+    "sonner": "^2.0.7",
     "stripe": "^20.1.2",
     "tailwind-merge": "^3.4.0",
     "zod": "^4.3.5"

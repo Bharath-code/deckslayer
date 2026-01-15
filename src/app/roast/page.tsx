@@ -11,6 +11,7 @@ import { createClient } from "@/lib/supabase";
 import { User } from "@supabase/supabase-js";
 import { useRouter, useSearchParams } from "next/navigation";
 import posthog from "posthog-js";
+import { toast } from "sonner";
 
 interface RoastData {
   headline_burn: string;
@@ -105,7 +106,7 @@ function RoastPageContent() {
       pdf.save(`DECKSLAYER_DIAGNOSTIC_${new Date().getTime()}.pdf`);
     } catch (err) {
       console.error(err);
-      alert("PDF Generation failed.");
+      toast.error("PDF Generation failed.");
     } finally {
       setExporting(false);
     }
@@ -127,13 +128,13 @@ function RoastPageContent() {
       });
 
       if (res.status === 402) {
-        alert("System restricted. Your audit quota has been depleted. Please purchase credits.");
+        toast.error("Your audit quota has been depleted. Please purchase credits.");
         router.push("/#pricing");
         return;
       }
 
       if (res.status === 429) {
-        alert("Rate limit exceeded. Please wait a moment before trying again.");
+        toast.warning("Rate limit exceeded. Please wait a moment before trying again.");
         return;
       }
 
@@ -180,7 +181,7 @@ function RoastPageContent() {
     } catch (error: unknown) {
       console.error(error);
       const errorMessage = error instanceof Error ? error.message : "The diagnostic was interrupted. Please try again.";
-      alert(errorMessage);
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
     }

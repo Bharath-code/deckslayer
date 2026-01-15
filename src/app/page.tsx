@@ -7,6 +7,8 @@ import { SlayerLogo } from "@/components/SlayerLogo";
 import { createClient } from "@/lib/supabase";
 import { User } from "@supabase/supabase-js";
 import { useRouter } from "next/navigation";
+import { toast } from "sonner";
+import { ThemeToggle } from "@/components/ThemeToggle";
 
 export default function Home() {
   const [loading, setLoading] = useState<string | null>(null);
@@ -66,7 +68,7 @@ export default function Home() {
         window.location.href = data.url;
       }
     } catch {
-      alert("System overload. High demand detected.");
+      toast.error("System overload. Please try again.");
     } finally {
       setLoading(null);
     }
@@ -89,6 +91,7 @@ export default function Home() {
         <div className="hidden md:flex gap-12 text-[10px] uppercase tracking-[0.3em] text-zinc-500 font-bold items-center">
           <Link href="#methodology" className="hover:text-red-500 transition-colors">Methodology</Link>
           <Link href="#agents" className="hover:text-red-500 transition-colors">The Partners</Link>
+          <ThemeToggle />
           {user && (
             <Link href="/history" className="hover:text-red-500 transition-colors flex items-center gap-2">
               <FileText size={12} /> Archives
